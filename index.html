@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Mahasiswa</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="navbar navbar-dark bg-dark">
+        <h2 class="text-white">Data Mahasiswa</h2>
+    </div>
+    <div class="header">
+        <div class="left">Halo</div>
+        <div class="right" id="clock"></div>
+    </div>    
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8">
+                <table id="dataMahasiswa" class="table table-bordered">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th>NIM</th>
+                            <th>Nama</th>
+                            <th>Alamat</th>
+                            <th>Pengaturan</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="pagination" class="pagination"></div>
+            </div>
+            <div class="col-md-4">
+                <div id="formTambahData" class="card">
+                    <div class="card-body">
+                        <h2 class="text-center">Tambah Data</h2>
+                        <form id="formTambah">
+                            <div class="form-group">
+                                <label for="nim">NIM:</label>
+                                <input type="text" id="nim" name="nim" class="form-control" pattern="\d*" title="NIM harus berupa angka">
+                            </div>
+                            <div class="form-group">
+                                <label for="nama">Nama:</label>
+                                <input type="text" id="nama" name="nama" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label for="alamat">Alamat:</label>
+                                <input type="text" id="alamat" name="alamat" class="form-control">
+                            </div>
+                            <button class="btn btn-outline-primary btn-sm" type="button" id="btnReset" onclick="resetData()">Reset</button>
+                            <button class="btn btn-primary btn-sm" type="button" id="btnTambah">Tambah</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="modalEditData" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Data</h5>
+                    <button type="button" class="btn-close" id="btnCloseModalEdit"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditData">
+                        <label for="editNim">NIM:</label><br>
+                        <input type="text" id="editNim" name="editNim" class="form-control" readonly><br>
+                        <label for="editNama">Nama:</label><br>
+                        <input type="text" id="editNama" name="editNama" class="form-control"><br>
+                        <label for="editAlamat">Alamat:</label><br>
+                        <input type="text" id="editAlamat" name="editAlamat" class="form-control"><br>
+                        <button class="btn btn-primary btn-sm" type="button" id="btnSimpan">Simpan</button>
+                        <button class="btn btn-danger btn-sm" type="button" id="btnDelete">Hapus</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+let dataMahasiswa = [];
+let indexEdit = -1;
+let currentPage = 1;
+const itemsPerPage = 5;
+
+document.getElementById('btnTambah').addEventListener('click', function() {
+    const nim = document.getElementById('nim').value;
+    const nama = document.getElementById('nama').value;
+    const alamat = document.getElementById('alamat').value;
+
+    // Validasi NIM harus berupa angka
+    if (!(/^\d+$/.test(nim))) {
+        customAlert('NIM harus berupa angka.', 'danger');
+        return;
+    }
+
+    // Validasi nama tidak boleh mengandung angka
+    if (/\d/.test(nama)) {
+        customAlert('Nama tidak boleh mengandung angka.', 'danger');
+        return;
+    }
+
+    // Validasi input tidak boleh kosong
+    if (!nim || !nama || !alamat) {
+        customAlert('Warning! Tidak Dapat Menambah Mahasiswa.', 'warning');
+        return;
+    }
+
+    dataMahasiswa.push({ nim, nama, alamat });
+    tampilkanData();
+    resetData();
+    customAlert('Added! Mahasiswa Baru Telah Ditambahkan.', 'success');
+});
+
+function resetData() {
+    document.getElementById('nim').value = '';
+    document.getElementById('nama').value = '';
+    document.getElementById('alamat').value = '';
+}
+
+
+function tampilkanData() {
+    const tabel = document.getElementById('dataMahasiswa').getElementsByTagName('tbody')[0];
+    tabel.innerHTML = '';
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, dataMahasiswa.length);
+
+    for (let i = startIndex; i < endIndex; i++) {
+        const mahasiswa = dataMahasiswa[i];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${mahasiswa.nim}</td><td>${mahasiswa.nama}</td><td>${mahasiswa.alamat}</td><td><button class="btn btn-danger btn-sm" onclick="hapusData(${i})">Hapus</button> <button class="btn btn-primary btn-sm" onclick="bukaModalEditData(${i})">Edit</button></td>`;
+        tabel.appendChild(tr);
+    }
+
+    const totalPages = Math.ceil(dataMahasiswa.length / itemsPerPage);
+    let pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (i === currentPage ? ' active' : '');
+        li.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+        pagination.appendChild(li);
+    }
+
+    const nextBtn = document.createElement('li');
+    nextBtn.className = 'page-item';
+    nextBtn.innerHTML = `<a class="page-link" href="#" onclick="nextPage()">Next</a>`;
+    pagination.appendChild(nextBtn);
+
+    const prevBtn = document.createElement('li');
+    prevBtn.className = 'page-item';
+    prevBtn.innerHTML = '<a class="page-link" href="#" onclick="prevPage()">Previous</a>';
+    pagination.insertBefore(prevBtn, pagination.childNodes[0]);
+}
+
+function changePage(page) {
+    currentPage = page;
+    tampilkanData();
+}
+
+function nextPage() {
+    if (currentPage < Math.ceil(dataMahasiswa.length / itemsPerPage)) {
+        currentPage++;
+        tampilkanData();
+    }
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        tampilkanData();
+    }
+}
+
+function hapusData(index) {
+    dataMahasiswa.splice(index, 1);
+    tampilkanData();
+    customAlert('Deleted! Data Mahasiswa Berhasil Dihapus.', 'danger');
+}
+
+function bukaModalEditData(index) {
+    const mahasiswa = dataMahasiswa[index];
+    document.getElementById('editNim').value = mahasiswa.nim;
+    document.getElementById('editNama').value = mahasiswa.nama;
+    document.getElementById('editAlamat').value = mahasiswa.alamat;
+    document.getElementById('modalEditData').style.display = 'block';
+    indexEdit = index;
+}
+
+document.getElementById('btnCloseModalEdit').addEventListener('click', closeModalEditData);
+
+function closeModalEditData() {
+    document.getElementById('modalEditData').style.display = 'none';
+}
+
+document.getElementById('btnSimpan').addEventListener('click', simpanData);
+document.getElementById('btnDelete').addEventListener('click', () => hapusData(indexEdit));
+
+function simpanData() {
+    const mahasiswa = dataMahasiswa[indexEdit];
+    mahasiswa.nama = document.getElementById('editNama').value;
+    mahasiswa.alamat = document.getElementById('editAlamat').value;
+    tampilkanData();
+    document.getElementById('modalEditData').style.display = 'none';
+    customAlert('Updated! Data Mahasiswa Berhasil Diperbaharui.', 'info');
+}
+
+document.getElementById('btnCloseModalEdit').addEventListener('click', function() {
+    document.getElementById('modalEditData').style.display = 'none';
+});
+
+function customAlert(msg, type) {
+    let alertBox = document.createElement('div');
+    if (type === 'success') {
+        alertBox.className = 'alert alert-success'; 
+    } else if (type === 'danger') {
+        alertBox.className = 'alert alert-danger'; 
+    } else if (type === 'warning') {
+        alertBox.className = 'alert alert-warning'; 
+    } else if (type === 'info') {
+        alertBox.className = 'alert alert-info'; 
+    } else if (type === 'updated') {
+        alertBox.className = 'alert alert-updated';
+    } else {
+        alertBox.className = 'alert';
+    }
+    alertBox.innerText = msg;
+    document.body.insertBefore(alertBox, document.body.childNodes[0]);
+    setTimeout(function () {
+        alertBox.remove();
+    }, 3000);
+}
+function updateClock() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const seconds = now.getSeconds().toString().padStart(2, '0');
+    document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
+}
+
+setInterval(updateClock, 1000);
+
+
+tampilkanData(); 
+
+</script>
+</body>
+</html>

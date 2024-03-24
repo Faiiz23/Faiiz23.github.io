@@ -1,0 +1,40 @@
+    * {
+        margin: 0;
+        padding: 0;
+        outline: 0;
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    html, body {
+        height: 100vh;
+    }
+
+    body {
+        background-image: url("https://asset-2.tstatic.net/tribunnews/foto/bank/images/kampus-umn-2.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        background-color: rgba(255, 255, 255, 0.8); /* menambahkan opacity pada background container */
+        padding: 20px;
+        border-radius: 10px;
+    }
+
+    .card {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* menambahkan shadow pada card */
+    }
+
+    .card-header {
+        background-color: #f8f9fa; /* warna background header card */
+        border-bottom: 1px solid #dee2e6; /* garis bawah header card */
+    }
+
+    .card-body {
+        padding: 20px;
+    }
